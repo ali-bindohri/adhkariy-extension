@@ -10,9 +10,9 @@ export class ToastManager {
 
   initialize() {
     // Create toast container if it doesn't exist
-    if (!document.getElementById('toast-container')) {
-      this.toastContainer = document.createElement('div');
-      this.toastContainer.id = 'toast-container';
+    if (!document.getElementById("toast-container")) {
+      this.toastContainer = document.createElement("div");
+      this.toastContainer.id = "toast-container";
       this.toastContainer.style.cssText = `
         position: fixed;
         top: 20px;
@@ -29,14 +29,14 @@ export class ToastManager {
 
   show(options = {}) {
     const {
-      message = '',
-      arabic = '',
-      transliteration = '',
-      translation = '',
-      type = 'default', // default, success, warning, error
+      message = "",
+      arabic = "",
+      transliteration = "",
+      translation = "",
+      type = "default", // default, success, warning, error
       duration = 10000, // 10 seconds
       autoClose = true,
-      onClose = null
+      onClose = null,
     } = options;
 
     const toast = this.createToast({
@@ -45,7 +45,7 @@ export class ToastManager {
       transliteration,
       translation,
       type,
-      autoClose
+      autoClose,
     });
 
     this.toastContainer.appendChild(toast);
@@ -53,7 +53,7 @@ export class ToastManager {
 
     // Animate in
     setTimeout(() => {
-      toast.classList.add('show');
+      toast.classList.add("show");
     }, 10);
 
     // Auto close
@@ -66,8 +66,15 @@ export class ToastManager {
     return toast;
   }
 
-  createToast({ message, arabic, transliteration, translation, type, autoClose }) {
-    const toast = document.createElement('div');
+  createToast({
+    message,
+    arabic,
+    transliteration,
+    translation,
+    type,
+    autoClose,
+  }) {
+    const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
     toast.style.cssText = `
       background: white;
@@ -83,7 +90,7 @@ export class ToastManager {
     `;
 
     // Header
-    const header = document.createElement('div');
+    const header = document.createElement("div");
     header.style.cssText = `
       display: flex;
       justify-content: space-between;
@@ -91,7 +98,7 @@ export class ToastManager {
       margin-bottom: 12px;
     `;
 
-    const title = document.createElement('div');
+    const title = document.createElement("div");
     title.style.cssText = `
       font-size: 16px;
       font-weight: 600;
@@ -100,12 +107,14 @@ export class ToastManager {
       align-items: center;
       gap: 8px;
     `;
-    title.innerHTML = `<span>${this.getTypeIcon(type)}</span><span>اذكر الله - Remember Allah</span>`;
+    title.innerHTML = `<span>${this.getTypeIcon(
+      type
+    )}</span><span>اذكر الله - Remember Allah</span>`;
     header.appendChild(title);
 
     // Close button
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '✕';
+    const closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "✕";
     closeBtn.style.cssText = `
       background: none;
       border: none;
@@ -122,12 +131,12 @@ export class ToastManager {
       transition: all 0.2s;
     `;
     closeBtn.onmouseover = () => {
-      closeBtn.style.background = '#f0f0f0';
-      closeBtn.style.color = '#333';
+      closeBtn.style.background = "#f0f0f0";
+      closeBtn.style.color = "#333";
     };
     closeBtn.onmouseout = () => {
-      closeBtn.style.background = 'none';
-      closeBtn.style.color = '#999';
+      closeBtn.style.background = "none";
+      closeBtn.style.color = "#999";
     };
     closeBtn.onclick = () => this.closeToast(toast);
     header.appendChild(closeBtn);
@@ -135,7 +144,7 @@ export class ToastManager {
     toast.appendChild(header);
 
     // Content
-    const content = document.createElement('div');
+    const content = document.createElement("div");
     content.style.cssText = `
       display: flex;
       flex-direction: column;
@@ -143,7 +152,7 @@ export class ToastManager {
     `;
 
     if (arabic) {
-      const arabicText = document.createElement('div');
+      const arabicText = document.createElement("div");
       arabicText.textContent = arabic;
       arabicText.style.cssText = `
         font-size: 22px;
@@ -158,7 +167,7 @@ export class ToastManager {
     }
 
     if (transliteration) {
-      const transliterationText = document.createElement('div');
+      const transliterationText = document.createElement("div");
       transliterationText.textContent = transliteration;
       transliterationText.style.cssText = `
         font-size: 14px;
@@ -170,7 +179,7 @@ export class ToastManager {
     }
 
     if (translation) {
-      const translationText = document.createElement('div');
+      const translationText = document.createElement("div");
       translationText.textContent = translation;
       translationText.style.cssText = `
         font-size: 14px;
@@ -183,7 +192,7 @@ export class ToastManager {
     }
 
     if (message) {
-      const messageText = document.createElement('div');
+      const messageText = document.createElement("div");
       messageText.textContent = message;
       messageText.style.cssText = `
         font-size: 14px;
@@ -196,7 +205,7 @@ export class ToastManager {
     toast.appendChild(content);
 
     // Add show class styles
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       .toast.show {
         transform: translateX(0) !important;
@@ -207,8 +216,8 @@ export class ToastManager {
         opacity: 0 !important;
       }
     `;
-    if (!document.getElementById('toast-styles')) {
-      style.id = 'toast-styles';
+    if (!document.getElementById("toast-styles")) {
+      style.id = "toast-styles";
       document.head.appendChild(style);
     }
 
@@ -216,9 +225,9 @@ export class ToastManager {
   }
 
   closeToast(toast, callback) {
-    toast.classList.add('hide');
-    toast.classList.remove('show');
-    
+    toast.classList.add("hide");
+    toast.classList.remove("show");
+
     setTimeout(() => {
       if (toast.parentNode) {
         toast.parentNode.removeChild(toast);
@@ -229,27 +238,27 @@ export class ToastManager {
   }
 
   closeAll() {
-    this.activeToasts.forEach(toast => {
+    this.activeToasts.forEach((toast) => {
       this.closeToast(toast);
     });
   }
 
   getTypeColor(type) {
     const colors = {
-      default: '#2e7d32',
-      success: '#4caf50',
-      warning: '#ff9800',
-      error: '#f44336'
+      default: "#2e7d32",
+      success: "#4caf50",
+      warning: "#ff9800",
+      error: "#f44336",
     };
     return colors[type] || colors.default;
   }
 
   getTypeIcon(type) {
     const icons = {
-      default: '🕌',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌'
+      default: "🕌",
+      success: "✅",
+      warning: "⚠️",
+      error: "❌",
     };
     return icons[type] || icons.default;
   }
@@ -264,14 +273,14 @@ export function showDhikrToast(dhikr, options = {}) {
     arabic: dhikr.arabic,
     transliteration: dhikr.transliteration,
     translation: dhikr.translation,
-    ...options
+    ...options,
   });
 }
 
-export function showMessageToast(message, type = 'default', duration = 3000) {
+export function showMessageToast(message, type = "default", duration = 3000) {
   return toast.show({
     message,
     type,
-    duration
+    duration,
   });
 }

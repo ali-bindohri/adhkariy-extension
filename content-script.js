@@ -1,5 +1,4 @@
 // Content Script - Injects toast notifications into all web pages
-console.log("[CONTENT] Adhkar content script loaded");
 
 // Create toast container and styles
 function initializeToastSystem() {
@@ -33,14 +32,10 @@ function initializeToastSystem() {
       document.body.appendChild(container);
     });
   }
-
-  console.log("[CONTENT] Toast container initialized");
 }
 
 // Show dhikr toast notification
 function showDhikrToast(dhikr, settings) {
-  console.log("[CONTENT] Showing dhikr toast:", dhikr);
-
   const container = document.getElementById("adhkar-toast-container");
   if (!container) {
     console.error("[CONTENT] Container not found!");
@@ -198,60 +193,28 @@ function showDhikrToast(dhikr, settings) {
       toast.style.opacity = "1";
 
       // Check visibility after animation
-      setTimeout(() => {
-        const rect = toast.getBoundingClientRect();
-        const computed = window.getComputedStyle(toast);
-        console.log("[CONTENT] 🔍 VISIBILITY CHECK:");
-        console.log(
-          "  - Position:",
-          rect.top,
-          rect.left,
-          rect.right,
-          rect.bottom
-        );
-        console.log("  - Size:", rect.width, "x", rect.height);
-        console.log("  - Opacity:", computed.opacity);
-        console.log("  - Display:", computed.display);
-        console.log("  - Visibility:", computed.visibility);
-        console.log("  - Z-index:", computed.zIndex);
-        console.log("  - Transform:", computed.transform);
-        console.log(
-          "  - Is visible on screen:",
-          rect.top >= 0 && rect.left >= 0 && rect.top < window.innerHeight
-        );
-      }, 100);
-
-      console.log(
-        "[CONTENT] Animation applied. Transform:",
-        toast.style.transform,
-        "Opacity:",
-        toast.style.opacity
-      );
+      // setTimeout(() => {
+      //   const rect = toast.getBoundingClientRect();
+      //   const computed = window.getComputedStyle(toast);
+      // }, 100);
     });
   });
 
   // Auto close if enabled
   if (settings.autoClose) {
     const delay = (settings.autoCloseDelay || 10) * 1000;
-    console.log(`[CONTENT] Auto-closing in ${delay}ms`);
     setTimeout(() => {
       closeToast(toast);
     }, delay);
   }
-
-  console.log("[CONTENT] Toast displayed successfully");
 }
 
 // Close toast with animation
 function closeToast(toast) {
   // Prevent multiple closes
   if (toast.dataset.closing === "true") {
-    console.log("[CONTENT] Toast already closing, skipping...");
     return;
   }
-
-  console.log("[CONTENT] Closing toast");
-  console.trace("[CONTENT] Close called from:"); // Show where close was called from
 
   toast.dataset.closing = "true";
   toast.style.transform = "translateX(450px)";
@@ -271,14 +234,7 @@ if (!window.adhkarListenerAdded) {
 
   // Listen for messages from background script
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log("[CONTENT] 📨 Message received:", request);
-    console.log(
-      "[CONTENT] 📨 Listener count check:",
-      window.adhkarListenerAdded
-    );
-
     if (request.action === "showDhikr") {
-      console.log("[CONTENT] 🎯 Processing showDhikr action...");
       initializeToastSystem();
       showDhikrToast(request.dhikr, request.settings);
       sendResponse({ success: true });
@@ -286,10 +242,7 @@ if (!window.adhkarListenerAdded) {
 
     return true;
   });
-
-  console.log("[CONTENT] ✅ Message listener registered (once only)");
 } else {
-  console.log("[CONTENT] ⚠️ Message listener already exists, skipping...");
 }
 
 // Initialize on load
@@ -298,5 +251,3 @@ if (document.readyState === "loading") {
 } else {
   initializeToastSystem();
 }
-
-console.log("[CONTENT] Content script ready");
