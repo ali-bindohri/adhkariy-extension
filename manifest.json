@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Islamic Adhkar Reminder",
+  "version": "1.0.0",
+  "description": "Remember Allah with timely adhkar reminders throughout your day",
+  "permissions": ["notifications", "alarms", "storage", "activeTab", "tabs"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": ["<all_urls>"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

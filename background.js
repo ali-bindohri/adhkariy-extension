@@ -1,0 +1,410 @@
+// Background Service Worker for Islamic Adhkar Reminder
+import { getRandomDhikr, getCurrentReminderType } from "./adhkar-data.js";
+
+const ALARM_NAME = "adhkarReminder";
+
+// TESTING MODE: Set to true for faster intervals (FOR DEVELOPMENT ONLY)
+const TEST_MODE = false; // ❌ DISABLED - Using REAL time intervals now
+const TEST_SPEED_MULTIPLIER = 6; // Makes intervals 6x faster: 1min→10sec, 5min→50sec, 10min→100sec
+let testIntervalId = null;
+
+// Initialize extension when installed
+chrome.runtime.onInstalled.addListener((details) => {
+  console.log("[INSTALL] Islamic Adhkar Reminder installed/updated");
+  console.log("[INSTALL] Reason:", details.reason);
+
+  // Set default settings
+  chrome.storage.sync.get(
+    {
+      enabled: true, // ✅ AUTO-ENABLED FOR TESTING
+      interval: 10, // minutes (default: 10 minutes)
+      morningEnabled: true,
+      nightEnabled: true,
+      generalEnabled: true,
+      autoClose: true,
+      autoCloseDelay: 10, // seconds
+      isPaused: false,
+    },
+    (settings) => {
+      console.log("[INSTALL] Default settings:", settings);
+      chrome.storage.sync.set(settings, () => {
+        console.log("[INSTALL] Settings saved");
+        // Start the timer immediately if enabled
+        if (settings.enabled && !settings.isPaused) {
+          console.log("[INSTALL] Auto-starting notifications");
+          setupAlarm(settings.interval);
+        }
+      });
+    }
+  );
+});
+
+// Listen for changes in storage to update alarms
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  console.log("[STORAGE] Storage changed:", changes);
+  if (namespace === "sync") {
+    if (changes.enabled || changes.interval || changes.isPaused) {
+      // Log what specifically changed
+      if (changes.interval) {
+        console.log(
+          `[STORAGE] Interval changed: ${changes.interval.oldValue} → ${changes.interval.newValue} minutes`
+        );
+      }
+      if (changes.enabled) {
+        console.log(
+          `[STORAGE] Enabled changed: ${changes.enabled.oldValue} → ${changes.enabled.newValue}`
+        );
+      }
+      if (changes.isPaused) {
+        console.log(
+          `[STORAGE] Paused changed: ${changes.isPaused.oldValue} → ${changes.isPaused.newValue}`
+        );
+      }
+
+      chrome.storage.sync.get(
+        ["enabled", "interval", "isPaused"],
+        (settings) => {
+          console.log("[STORAGE] Current settings:", settings);
+          if (settings.enabled && !settings.isPaused) {
+            console.log(
+              `[STORAGE] Restarting with ${settings.interval} minute interval`
+            );
+            setupAlarm(settings.interval);
+          } else {
+            console.log("[STORAGE] Clearing alarms and intervals");
+            // Clear test interval
+            if (testIntervalId) {
+              clearInterval(testIntervalId);
+              testIntervalId = null;
+            }
+            // Clear alarm
+            chrome.alarms.clear(ALARM_NAME);
+          }
+        }
+      );
+    }
+  }
+});
+
+// Setup alarm with specified interval
+function setupAlarm(intervalMinutes) {
+  console.log("🔧 setupAlarm called with intervalMinutes:", intervalMinutes);
+  console.log("🔧 Type of intervalMinutes:", typeof intervalMinutes);
+
+  // Clear any existing test interval
+  if (testIntervalId) {
+    clearInterval(testIntervalId);
+    testIntervalId = null;
+    console.log("[SETUP] Cleared existing test interval");
+  }
+
+  if (TEST_MODE) {
+    // Use setInterval for testing - respects user's interval choice but faster
+    // Divide by TEST_SPEED_MULTIPLIER to make intervals faster for testing
+    const testSeconds = (intervalMinutes * 60) / TEST_SPEED_MULTIPLIER;
+    console.log(
+      `[TEST MODE] Setting up ${intervalMinutes}-minute interval (${testSeconds} seconds with ${TEST_SPEED_MULTIPLIER}x speed)`
+    );
+
+    testIntervalId = setInterval(() => {
+      console.log(
+        `[TEST TRIGGER] Test interval triggered at ${new Date().toLocaleTimeString()}`
+      );
+
+      chrome.storage.sync.get(
+        [
+          "enabled",
+          "morningEnabled",
+          "nightEnabled",
+          "generalEnabled",
+          "isPaused",
+          "autoClose",
+          "autoCloseDelay",
+        ],
+        (settings) => {
+          if (!settings.enabled || settings.isPaused) {
+            console.log(
+              `[TEST SKIP] Extension is ${
+                !settings.enabled ? "disabled" : "paused"
+              }`
+            );
+            return;
+          }
+
+          const reminderType = getCurrentReminderType();
+          console.log(`[TEST] Current reminder type: ${reminderType}`);
+
+          // Check if the current reminder type is enabled
+          if (
+            (reminderType === "morning" && !settings.morningEnabled) ||
+            (reminderType === "night" && !settings.nightEnabled) ||
+            (reminderType === "general" && !settings.generalEnabled)
+          ) {
+            console.log(`[TEST SKIP] ${reminderType} reminders are disabled`);
+            return;
+          }
+
+          console.log(`[TEST SHOW] Showing test notification`);
+          showDhikrNotification(settings);
+        }
+      );
+    }, testSeconds * 1000); // Use actual interval in milliseconds
+
+    console.log(
+      `[TEST MODE ACTIVE] Notifications every ${intervalMinutes} min = ${testSeconds} sec (${TEST_SPEED_MULTIPLIER}x faster)`
+    );
+  } else {
+    // Production mode: Use Chrome alarms
+    console.log(
+      `[SETUP] Setting up alarm with interval: ${intervalMinutes} minutes`
+    );
+    chrome.alarms.clear(ALARM_NAME, () => {
+      chrome.alarms.create(
+        ALARM_NAME,
+        {
+          delayInMinutes: intervalMinutes,
+          periodInMinutes: intervalMinutes,
+        },
+        () => {
+          // Verify alarm was created
+          chrome.alarms.get(ALARM_NAME, (alarm) => {
+            if (alarm) {
+              const nextTime = new Date(alarm.scheduledTime);
+              const minutesUntil = Math.round(
+                (alarm.scheduledTime - Date.now()) / 60000
+              );
+
+              console.log(`[SUCCESS] ✅ Alarm created successfully!`);
+              console.log(`[INFO] ⏰ Interval: ${intervalMinutes} minute(s)`);
+              console.log(
+                `[INFO] 📅 Next notification at: ${nextTime.toLocaleTimeString()}`
+              );
+              console.log(
+                `[INFO] ⏱️  That's in ${minutesUntil} minute(s) from now`
+              );
+              console.log(
+                `[INFO] 🔄 Will repeat every ${intervalMinutes} minute(s)`
+              );
+            } else {
+              console.error("[ERROR] ❌ Failed to create alarm!");
+            }
+          });
+        }
+      );
+    });
+  }
+}
+
+// Handle alarm triggers
+chrome.alarms.onAlarm.addListener((alarm) => {
+  console.log(
+    `[ALARM] Alarm triggered:`,
+    alarm.name,
+    new Date().toLocaleTimeString()
+  );
+  if (alarm.name === ALARM_NAME) {
+    chrome.storage.sync.get(
+      [
+        "enabled",
+        "morningEnabled",
+        "nightEnabled",
+        "generalEnabled",
+        "isPaused",
+        "autoClose",
+        "autoCloseDelay",
+      ],
+      (settings) => {
+        console.log(`[CHECK] Settings:`, settings);
+
+        if (!settings.enabled || settings.isPaused) {
+          console.log(
+            `[SKIP] Reminders are ${!settings.enabled ? "disabled" : "paused"}`
+          );
+          return;
+        }
+
+        const reminderType = getCurrentReminderType();
+        console.log(`[TYPE] Current reminder type: ${reminderType}`);
+
+        // Check if the current reminder type is enabled
+        if (
+          (reminderType === "morning" && !settings.morningEnabled) ||
+          (reminderType === "night" && !settings.nightEnabled) ||
+          (reminderType === "general" && !settings.generalEnabled)
+        ) {
+          console.log(`[SKIP] ${reminderType} reminders are disabled`);
+          return;
+        }
+
+        console.log(`[SHOW] Showing notification for ${reminderType}`);
+        showDhikrNotification(settings);
+      }
+    );
+  }
+});
+
+// Show dhikr notification - sends to all tabs
+function showDhikrNotification(settings) {
+  console.log(`[NOTIFICATION] Preparing notification...`);
+  const dhikr = getRandomDhikr();
+  const reminderType = getCurrentReminderType();
+
+  console.log(`[DHIKR] Selected:`, dhikr);
+
+  // Send to all tabs
+  chrome.tabs.query({}, (tabs) => {
+    console.log(`[BROADCAST] Sending dhikr to ${tabs.length} tabs`);
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    tabs.forEach((tab) => {
+      // Skip chrome:// and other special pages
+      if (
+        tab.url &&
+        (tab.url.startsWith("chrome://") ||
+          tab.url.startsWith("chrome-extension://") ||
+          tab.url.startsWith("edge://") ||
+          tab.url.startsWith("about:"))
+      ) {
+        console.log(`[SKIP] Skipping special page: ${tab.url}`);
+        return;
+      }
+
+      chrome.tabs.sendMessage(
+        tab.id,
+        {
+          action: "showDhikr",
+          dhikr: dhikr,
+          settings: settings,
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            errorCount++;
+            console.log(
+              `[ERROR] Failed to send to tab ${tab.id}:`,
+              chrome.runtime.lastError.message
+            );
+          } else {
+            successCount++;
+            console.log(`[SUCCESS] Sent to tab ${tab.id} (${tab.title})`);
+          }
+        }
+      );
+    });
+
+    // Also show Chrome notification as fallback
+    const emoji =
+      reminderType === "morning"
+        ? "🌅"
+        : reminderType === "night"
+        ? "🌙"
+        : "🕌";
+    const message = `${dhikr.arabic}\n\n${dhikr.transliteration}\n\n${dhikr.translation}`;
+
+    chrome.notifications.create(
+      {
+        type: "basic",
+        title: `${emoji} اذكر الله - Remember Allah`,
+        message: message,
+        priority: 2,
+        requireInteraction: !settings.autoClose,
+        silent: false,
+      },
+      (notificationId) => {
+        if (chrome.runtime.lastError) {
+          console.error(
+            "[ERROR] Fallback notification failed:",
+            chrome.runtime.lastError
+          );
+          return;
+        }
+        console.log("[SUCCESS] Fallback notification shown:", notificationId);
+
+        if (settings.autoClose) {
+          setTimeout(() => {
+            chrome.notifications.clear(notificationId);
+          }, settings.autoCloseDelay * 1000);
+        }
+      }
+    );
+
+    setTimeout(() => {
+      console.log(
+        `[STATS] Sent successfully to ${successCount} tabs, ${errorCount} errors`
+      );
+    }, 1000);
+  });
+}
+
+// Handle notification clicks
+chrome.notifications.onClicked.addListener((notificationId) => {
+  chrome.notifications.clear(notificationId);
+});
+
+// Handle notification button clicks (close button)
+chrome.notifications.onButtonClicked.addListener(
+  (notificationId, buttonIndex) => {
+    chrome.notifications.clear(notificationId);
+  }
+);
+
+// Keep service worker alive
+chrome.runtime.onStartup.addListener(() => {
+  console.log("[STARTUP] Extension started");
+  chrome.storage.sync.get(
+    ["enabled", "interval", "isPaused", "autoClose", "autoCloseDelay"],
+    (settings) => {
+      console.log("[STARTUP] Loading settings:", settings);
+      if (settings.enabled && !settings.isPaused) {
+        console.log("[STARTUP] Re-establishing alarm");
+        setupAlarm(settings.interval);
+
+        // Show immediate test notification on startup (for testing)
+        // DISABLED: Let the alarm run naturally
+        // if (TEST_MODE) {
+        //   console.log("[STARTUP] Showing immediate test notification");
+        //   setTimeout(() => {
+        //     showDhikrNotification(settings);
+        //   }, 2000); // Wait 2 seconds for content scripts to load
+        // }
+      } else {
+        console.log("[STARTUP] Extension is disabled or paused");
+      }
+    }
+  );
+});
+
+// Also check and start alarm when service worker wakes up
+chrome.storage.sync.get(
+  ["enabled", "interval", "isPaused", "autoClose", "autoCloseDelay"],
+  (settings) => {
+    console.log("[INIT] Service worker active, checking settings:", settings);
+    if (settings.enabled && !settings.isPaused) {
+      console.log("[INIT] Starting notifications");
+      setupAlarm(settings.interval);
+
+      // Show immediate test notification (for testing)
+      // DISABLED: Let the alarm run naturally
+      // if (TEST_MODE) {
+      //   console.log("[INIT] Showing immediate test notification");
+      //   setTimeout(() => {
+      //     showDhikrNotification(settings);
+      //   }, 2000); // Wait 2 seconds for content scripts to load
+      // }
+    }
+  }
+);
+
+// Handle messages from popup (like test notification)
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log("[MESSAGE] Received message:", request);
+  if (request.action === "testNotification") {
+    console.log("[TEST] Test notification requested");
+    chrome.storage.sync.get(["autoClose", "autoCloseDelay"], (settings) => {
+      showDhikrNotification(settings);
+      sendResponse({ success: true });
+    });
+    return true; // Required for async sendResponse
+  }
+});
