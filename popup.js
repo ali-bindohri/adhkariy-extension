@@ -50,20 +50,17 @@ function loadSettings() {
       pauseToggle.checked = settings.isPaused;
 
       // Set interval radio or custom input
-      console.log("📥 Loading interval from storage:", settings.interval);
       let isPresetSelected = false;
       intervalRadios.forEach((radio) => {
         if (parseInt(radio.value) === settings.interval) {
           radio.checked = true;
           isPresetSelected = true;
-          console.log("✅ Preset selected:", radio.value);
         }
       });
 
       // If not a preset, show it in custom input
       if (!isPresetSelected) {
         customIntervalInput.value = settings.interval;
-        console.log("🔢 Custom interval loaded:", settings.interval);
       }
 
       // Show/hide settings panel
@@ -126,17 +123,11 @@ function setupEventListeners() {
   setCustomIntervalBtn.addEventListener("click", () => {
     const customInterval = parseInt(customIntervalInput.value);
 
-    console.log("🔢 Custom interval input value:", customIntervalInput.value);
-    console.log("🔢 Parsed custom interval:", customInterval);
-
     // Validation
     if (!customInterval || customInterval < 1 || customInterval > 1440) {
-      console.log("❌ Validation failed!");
       showStatus("❌ Please enter 1-1440 minutes");
       return;
     }
-
-    console.log("✅ Validation passed! Setting interval to:", customInterval);
 
     // Uncheck all radio buttons
     intervalRadios.forEach((radio) => {
@@ -145,7 +136,6 @@ function setupEventListeners() {
 
     // Save custom interval
     chrome.storage.sync.set({ interval: customInterval }, () => {
-      console.log("💾 Custom interval saved to storage:", customInterval);
       showStatus(`⏰ Custom interval set to ${customInterval} minutes`);
     });
   });
@@ -243,9 +233,6 @@ function displayCurrentReminderInfo() {
       message = "🕌 Currently: General Adhkar";
       break;
   }
-
-  // Could add this info to the UI if desired
-  console.log(message);
 }
 
 // Initialize
