@@ -10,9 +10,6 @@ let testIntervalId = null;
 
 // Initialize extension when installed
 chrome.runtime.onInstalled.addListener((details) => {
-  console.log("[INSTALL] Islamic Adhkar Reminder installed/updated");
-  console.log("[INSTALL] Reason:", details.reason);
-
   // Set default settings
   chrome.storage.sync.get(
     {
@@ -26,7 +23,6 @@ chrome.runtime.onInstalled.addListener((details) => {
       isPaused: false,
     },
     (settings) => {
-      console.log("[INSTALL] Default settings:", settings);
       chrome.storage.sync.set(settings, () => {
         // Start the timer immediately if enabled
         if (settings.enabled && !settings.isPaused) {
@@ -80,29 +76,18 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 // Setup alarm with specified interval
 function setupAlarm(intervalMinutes) {
-  console.log("🔧 setupAlarm called with intervalMinutes:", intervalMinutes);
-  console.log("🔧 Type of intervalMinutes:", typeof intervalMinutes);
-
   // Clear any existing test interval
   if (testIntervalId) {
     clearInterval(testIntervalId);
     testIntervalId = null;
-    console.log("[SETUP] Cleared existing test interval");
   }
 
   if (TEST_MODE) {
     // Use setInterval for testing - respects user's interval choice but faster
     // Divide by TEST_SPEED_MULTIPLIER to make intervals faster for testing
     const testSeconds = (intervalMinutes * 60) / TEST_SPEED_MULTIPLIER;
-    console.log(
-      `[TEST MODE] Setting up ${intervalMinutes}-minute interval (${testSeconds} seconds with ${TEST_SPEED_MULTIPLIER}x speed)`
-    );
 
     testIntervalId = setInterval(() => {
-      console.log(
-        `[TEST TRIGGER] Test interval triggered at ${new Date().toLocaleTimeString()}`
-      );
-
       chrome.storage.sync.get(
         [
           "enabled",
@@ -115,16 +100,10 @@ function setupAlarm(intervalMinutes) {
         ],
         (settings) => {
           if (!settings.enabled || settings.isPaused) {
-            console.log(
-              `[TEST SKIP] Extension is ${
-                !settings.enabled ? "disabled" : "paused"
-              }`
-            );
             return;
           }
 
           const reminderType = getCurrentReminderType();
-          console.log(`[TEST] Current reminder type: ${reminderType}`);
 
           // Check if the current reminder type is enabled
           if (
@@ -132,19 +111,13 @@ function setupAlarm(intervalMinutes) {
             (reminderType === "night" && !settings.nightEnabled) ||
             (reminderType === "general" && !settings.generalEnabled)
           ) {
-            console.log(`[TEST SKIP] ${reminderType} reminders are disabled`);
             return;
           }
 
-          console.log(`[TEST SHOW] Showing test notification`);
           showDhikrNotification(settings);
         }
       );
     }, testSeconds * 1000); // Use actual interval in milliseconds
-
-    console.log(
-      `[TEST MODE ACTIVE] Notifications every ${intervalMinutes} min = ${testSeconds} sec (${TEST_SPEED_MULTIPLIER}x faster)`
-    );
   } else {
     // Production mode: Use Chrome alarms
 
@@ -290,7 +263,6 @@ function showDhikrNotification(settings) {
           );
           return;
         }
-        console.log("[SUCCESS] Fallback notification shown:", notificationId);
 
         if (settings.autoClose) {
           setTimeout(() => {
@@ -322,7 +294,6 @@ chrome.notifications.onButtonClicked.addListener(
 
 // Keep service worker alive
 chrome.runtime.onStartup.addListener(() => {
-  console.log("[STARTUP] Extension started");
   chrome.storage.sync.get(
     ["enabled", "interval", "isPaused", "autoClose", "autoCloseDelay"],
     (settings) => {
@@ -349,9 +320,7 @@ chrome.runtime.onStartup.addListener(() => {
 chrome.storage.sync.get(
   ["enabled", "interval", "isPaused", "autoClose", "autoCloseDelay"],
   (settings) => {
-    console.log("[INIT] Service worker active, checking settings:", settings);
     if (settings.enabled && !settings.isPaused) {
-      console.log("[INIT] Starting notifications");
       setupAlarm(settings.interval);
 
       // Show immediate test notification (for testing)

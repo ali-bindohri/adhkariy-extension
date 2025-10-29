@@ -177,18 +177,9 @@ function showDhikrToast(dhikr, settings) {
   toast.appendChild(content);
   container.appendChild(toast);
 
-  console.log("[CONTENT] Toast added to container");
-  console.log("[CONTENT] Container in DOM:", document.body.contains(container));
-  console.log("[CONTENT] Toast in container:", container.contains(toast));
-  console.log(
-    "[CONTENT] Toast computed style:",
-    window.getComputedStyle(toast).transform
-  );
-
   // Animate in
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      console.log("[CONTENT] Animating toast in...");
       toast.style.transform = "translateX(0)";
       toast.style.opacity = "1";
 
@@ -223,7 +214,6 @@ function closeToast(toast) {
   setTimeout(() => {
     if (toast.parentNode) {
       toast.parentNode.removeChild(toast);
-      console.log("[CONTENT] Toast removed from DOM");
     }
   }, 400);
 }
