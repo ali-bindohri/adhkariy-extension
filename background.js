@@ -244,7 +244,7 @@ function showDhikrNotification(settings) {
         : reminderType === "night"
         ? "🌙"
         : "🕌";
-    const message = `${dhikr.arabic}\n\n${dhikr.transliteration}\n\n${dhikr.translation}`;
+    const message = `${dhikr.arabic}\n\n${dhikr.repetition}\n\n${dhikr.why}`;
 
     chrome.notifications.create(
       {

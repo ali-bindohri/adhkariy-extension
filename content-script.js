@@ -95,7 +95,7 @@ function showDhikrToast(dhikr, settings) {
     alignItems: "center",
     gap: "8px",
   });
-  title.innerHTML = `<span style="font-size: 20px;">${emoji}</span><span>اذكر الله - Remember Allah</span>`;
+  title.innerHTML = `<span style="font-size: 20px;">${emoji}</span><span>اذكر الله</span>`;
 
   // Close button
   const closeBtn = document.createElement("button");
@@ -141,7 +141,7 @@ function showDhikrToast(dhikr, settings) {
   const arabicText = document.createElement("div");
   arabicText.textContent = dhikr.arabic;
   Object.assign(arabicText.style, {
-    fontSize: "22px",
+    fontSize: "20px",
     fontWeight: "700",
     color: "#2e7d32",
     direction: "rtl",
@@ -153,9 +153,9 @@ function showDhikrToast(dhikr, settings) {
 
   // Transliteration
   const transliterationText = document.createElement("div");
-  transliterationText.textContent = dhikr.transliteration;
+  transliterationText.textContent = dhikr.repetition;
   Object.assign(transliterationText.style, {
-    fontSize: "14px",
+    fontSize: "12px",
     fontStyle: "italic",
     color: "#666",
     lineHeight: "1.6",
@@ -164,12 +164,12 @@ function showDhikrToast(dhikr, settings) {
 
   // Translation
   const translationText = document.createElement("div");
-  translationText.textContent = dhikr.translation;
+  translationText.textContent = dhikr.why;
   Object.assign(translationText.style, {
-    fontSize: "14px",
+    fontSize: "12px",
     color: "#333",
     lineHeight: "1.6",
-    paddingTop: "8px",
+    paddingTop: "5px",
     borderTop: "1px solid #e0e0e0",
   });
   content.appendChild(translationText);
