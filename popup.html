@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Islamic Adhkar Reminder</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container" id="app">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-content">
+          <h1 class="title">
+            <span class="icon">🕌</span>
+            <span class="title-text">
+              <span class="arabic">اذكر الله</span>
+              <span class="english">Adhkar Reminder</span>
+            </span>
+          </h1>
+          <button
+            class="theme-toggle"
+            id="themeToggle"
+            title="Toggle dark mode"
+          >
+            <span class="theme-icon">🌙</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Enable/Disable Section -->
+        <section class="section">
+          <div class="toggle-row main-toggle">
+            <div class="toggle-label">
+              <span class="label-text">تفعيل التذكيرات</span>
+              <!-- <span class="label-arabic">تفعيل التذكيرات</span> -->
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="enableToggle" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Settings (shown when enabled) -->
+        <div id="settings" class="settings-panel" style="display: none">
+          <!-- Interval Selection -->
+          <section class="section">
+            <div class="section-title">
+              <span>فترة التذكير</span>
+              <!-- <span class="section-title-arabic">فترة التذكير</span> -->
+            </div>
+
+            <!-- Custom Interval Input -->
+            <div class="custom-interval">
+              <label for="customInterval" class="custom-interval-label">
+                <span>⏰ أدخل فترة تذكير مخصصة (دقائق):</span>
+              </label>
+              <div class="custom-interval-input-group">
+                <input
+                  type="number"
+                  id="customInterval"
+                  min="1"
+                  max="1440"
+                  placeholder="مثال: 1, 2, 15, 45..."
+                  class="custom-interval-input"
+                />
+                <button id="setCustomInterval" class="custom-interval-btn">
+                  حفظ ✓
+                </button>
+              </div>
+              <div class="custom-interval-hint">
+                أدخل 1-1440 دقيقة (يوم واحد كحد أقصى)
+              </div>
+            </div>
+
+            <!-- Quick Presets -->
+            <div class="section-subtitle">
+              <span>أو اختر التذكير :</span>
+            </div>
+            <div class="interval-options">
+              <label class="interval-option">
+                <input type="radio" name="interval" value="1" />
+                <span class="option-label">1 دقيقة</span>
+              </label>
+              <label class="interval-option">
+                <input type="radio" name="interval" value="5" />
+                <span class="option-label">5 دقائق</span>
+              </label>
+              <label class="interval-option">
+                <input type="radio" name="interval" value="10" checked />
+                <span class="option-label">10 دقائق</span>
+              </label>
+              <label class="interval-option">
+                <input type="radio" name="interval" value="20" />
+                <span class="option-label">20 دقائق</span>
+              </label>
+              <label class="interval-option">
+                <input type="radio" name="interval" value="30" />
+                <span class="option-label">30 دقائق</span>
+              </label>
+              <label class="interval-option">
+                <input type="radio" name="interval" value="50" />
+                <span class="option-label">50 دقائق</span>
+              </label>
+              <label class="interval-option">
+                <input type="radio" name="interval" value="60" />
+                <span class="option-label">1 ساعة</span>
+              </label>
+            </div>
+          </section>
+
+          <!-- Reminder Types -->
+          <section class="section">
+            <div class="section-title">
+              <span>أنواع التذكيرات</span>
+              <!-- <span class="section-title-arabic">أنواع التذكيرات</span> -->
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span class="label-text">🌅 الصباح (05:00 ص - 09:00 ص)</span>
+                <span class="label-arabic">الصباح</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="morningToggle" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span class="label-text">🌙 المساء (04:00 م - 07:00 م)</span>
+                <span class="label-arabic">المساء</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="nightToggle" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span class="label-text">🕌 عام (أي وقت)</span>
+                <span class="label-arabic">عام</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="generalToggle" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </section>
+
+          <!-- Notification Settings -->
+          <section class="section">
+            <div class="section-title">
+              <span>إعدادات الإشعارات</span>
+              <!-- <span class="section-title-arabic">إعدادات الإشعارات</span> -->
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span class="label-text">إغلاق تلقائي</span>
+                <!-- <span class="label-arabic">إغلاق تلقائي</span> -->
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="autoCloseToggle" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div id="autoCloseSettings" class="sub-settings">
+              <div class="input-group">
+                <label for="autoCloseDelay">
+                  <span>إغلاق بعد (ثواني)</span>
+                  <!-- <span class="label-arabic">الإغلاق بعد (ثواني)</span> -->
+                </label>
+                <input
+                  type="number"
+                  id="autoCloseDelay"
+                  min="5"
+                  max="60"
+                  value="10"
+                  step="5"
+                />
+              </div>
+            </div>
+          </section>
+
+          <!-- Pause Feature -->
+          <section class="section">
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span class="label-text">⏸️ إيقاف مؤقت</span>
+                <!-- <span class="label-arabic">إيقاف مؤقت</span> -->
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="pauseToggle" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </section>
+
+          <!-- Action Buttons -->
+          <section class="section actions">
+            <button class="btn btn-primary" id="testNotification">
+              <span>🔔 اختبار الإشعار</span>
+            </button>
+          </section>
+        </div>
+
+        <!-- Status Message -->
+        <div
+          id="statusMessage"
+          class="status-message"
+          style="display: none"
+        ></div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <p class="footer-text">
+          <span class="arabic">اذكروا الله ذكراً كثيراً</span>
+          <span>فَاذْكُرُونِي أَذْكُرْكُمْ</span>
+        </p>
+      </footer>
+    </div>
+
+    <script src="popup.js" type="module"></script>
+  </body>
+</html>
