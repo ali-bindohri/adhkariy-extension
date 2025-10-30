@@ -1,15 +1,27 @@
 {
   "manifest_version": 3,
-  "name": "Islamic Adhkar Reminder",
+  "name": "اذكاري (Adhkariy)",
   "version": "1.0.0",
-  "description": "Remember Allah with timely adhkar reminders throughout your day",
+  "description": "اذكر الله بأذكارك المناسبة طوال يومك",
   "permissions": ["notifications", "alarms", "storage", "activeTab", "tabs"],
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/Adhkariy16.png",
+      "32": "icons/Adhkariy32.png",
+      "48": "icons/Adhkariy48.png",
+      "128": "icons/Adhkariy128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/Adhkariy16.png",
+    "32": "icons/Adhkariy32.png",
+    "48": "icons/Adhkariy48.png",
+    "128": "icons/Adhkariy128.png"
   },
   "content_scripts": [
     {

@@ -85,26 +85,26 @@ function setupEventListeners() {
     const enabled = e.target.checked;
     chrome.storage.sync.set({ enabled }, () => {
       settingsPanel.style.display = enabled ? "block" : "none";
-      showStatus(enabled ? "✅ Reminders enabled" : "⏸️ Reminders disabled");
+      showStatus(enabled ? "✅ تذكيرات مفعلة" : "⏸️ تذكيرات معطلة");
     });
   });
 
   // Reminder type toggles
   morningToggle.addEventListener("change", (e) => {
     chrome.storage.sync.set({ morningEnabled: e.target.checked }, () => {
-      showStatus("Settings saved");
+      showStatus("تم حفظ الإعدادات");
     });
   });
 
   nightToggle.addEventListener("change", (e) => {
     chrome.storage.sync.set({ nightEnabled: e.target.checked }, () => {
-      showStatus("Settings saved");
+      showStatus("تم حفظ الإعدادات");
     });
   });
 
   generalToggle.addEventListener("change", (e) => {
     chrome.storage.sync.set({ generalEnabled: e.target.checked }, () => {
-      showStatus("Settings saved");
+      showStatus("تم حفظ الإعدادات");
     });
   });
 
@@ -113,7 +113,7 @@ function setupEventListeners() {
     radio.addEventListener("change", (e) => {
       const interval = parseInt(e.target.value);
       chrome.storage.sync.set({ interval }, () => {
-        showStatus(`⏰ Interval set to ${interval} minutes`);
+        showStatus(`⏰ تم تعيين الفترة إلى ${interval} دقائق`);
         customIntervalInput.value = ""; // Clear custom input
       });
     });
@@ -125,7 +125,7 @@ function setupEventListeners() {
 
     // Validation
     if (!customInterval || customInterval < 1 || customInterval > 1440) {
-      showStatus("❌ Please enter 1-1440 minutes");
+      showStatus("❌ يرجى إدخال 1-1440 دقائق");
       return;
     }
 
@@ -136,7 +136,7 @@ function setupEventListeners() {
 
     // Save custom interval
     chrome.storage.sync.set({ interval: customInterval }, () => {
-      showStatus(`⏰ Custom interval set to ${customInterval} minutes`);
+      showStatus(`⏰ تم تعيين الفترة المخصصة إلى ${customInterval} دقائق`);
     });
   });
 
@@ -152,7 +152,7 @@ function setupEventListeners() {
     const autoClose = e.target.checked;
     chrome.storage.sync.set({ autoClose }, () => {
       autoCloseSettings.style.display = autoClose ? "block" : "none";
-      showStatus("Settings saved");
+      showStatus("تم حفظ الإعدادات");
     });
   });
 
@@ -160,7 +160,7 @@ function setupEventListeners() {
   autoCloseDelay.addEventListener("change", (e) => {
     const delay = parseInt(e.target.value);
     chrome.storage.sync.set({ autoCloseDelay: delay }, () => {
-      showStatus("Settings saved");
+      showStatus("تم حفظ الإعدادات");
     });
   });
 
@@ -168,7 +168,7 @@ function setupEventListeners() {
   pauseToggle.addEventListener("change", (e) => {
     const isPaused = e.target.checked;
     chrome.storage.sync.set({ isPaused }, () => {
-      showStatus(isPaused ? "⏸️ Reminders paused" : "▶️ Reminders resumed");
+      showStatus(isPaused ? "⏸️ تذكيرات معطلة" : "▶️ تذكيرات مفعلة");
     });
   });
 
@@ -176,7 +176,7 @@ function setupEventListeners() {
   testNotificationBtn.addEventListener("click", () => {
     chrome.runtime.sendMessage({ action: "testNotification" }, (response) => {
       if (response && response.success) {
-        showStatus("🔔 Test notification sent!");
+        showStatus("🔔 تم إرسال الإشعار");
       }
     });
   });
