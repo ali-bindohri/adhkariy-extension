@@ -203,6 +203,59 @@
             </div>
           </section>
 
+          <!-- Blocked Websites -->
+          <section class="section">
+            <div class="section-title">
+              <span>🚫 مواقع محظورة</span>
+            </div>
+            <p
+              style="
+                font-size: 12px;
+                color: #666;
+                margin-bottom: 10px;
+                text-align: right;
+              "
+            >
+              أضف المواقع التي لا تريد ظهور الإشعارات فيها
+            </p>
+
+            <div class="input-group">
+              <input
+                type="text"
+                id="blockWebsiteInput"
+                placeholder="مثال: youtube.com"
+                style="
+                  flex: 1;
+                  padding: 8px;
+                  border: 1px solid #ddd;
+                  border-radius: 4px;
+                  font-size: 13px;
+                  direction: ltr;
+                  text-align: left;
+                "
+              />
+              <button
+                id="addBlockedSite"
+                style="
+                  padding: 8px 16px;
+                  background: #dc3545;
+                  color: white;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  margin-right: 8px;
+                  font-size: 13px;
+                "
+              >
+                حظر
+              </button>
+            </div>
+
+            <div id="blockedSitesList" style="margin-top: 12px">
+              <!-- Blocked sites will be listed here -->
+            </div>
+          </section>
+
           <!-- Action Buttons -->
           <section class="section actions">
             <button class="btn btn-primary" id="testNotification">

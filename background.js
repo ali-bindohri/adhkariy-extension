@@ -21,6 +21,7 @@ chrome.runtime.onInstalled.addListener((details) => {
       autoClose: true,
       autoCloseDelay: 10, // seconds
       isPaused: false,
+      blockedSites: [], // Array of blocked website patterns
     },
     (settings) => {
       chrome.storage.sync.set(settings, () => {
@@ -192,91 +193,140 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
+// Check if we have host permissions
+async function hasHostPermissions() {
+  try {
+    const result = await chrome.permissions.contains({
+      origins: ["<all_urls>"],
+    });
+    return result;
+  } catch (error) {
+    return false;
+  }
+}
+
+// Inject content script and send notification
+async function injectAndShowNotification(tabId, dhikr, settings) {
+  // Check if we have permission first
+  const hasPermission = await hasHostPermissions();
+  if (!hasPermission) {
+    return; // Skip if no permission granted
+  }
+
+  try {
+    // Try to inject the content script
+    await chrome.scripting.executeScript({
+      target: { tabId: tabId },
+      files: ["content-script.js"],
+    });
+
+    // Wait a bit for the script to initialize
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Send message
+    chrome.tabs.sendMessage(tabId, {
+      action: "showDhikr",
+      dhikr: dhikr,
+      settings: settings,
+    });
+  } catch (error) {
+    // Silently ignore injection errors (already injected or restricted page)
+  }
+}
+
+// Check if URL is blocked
+function isUrlBlocked(url, blockedSites) {
+  if (!blockedSites || blockedSites.length === 0) {
+    return false;
+  }
+
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.replace(/^www\./, "").toLowerCase();
+
+    return blockedSites.some((blockedSite) => {
+      const blocked = blockedSite.toLowerCase();
+      return hostname === blocked || hostname.endsWith("." + blocked);
+    });
+  } catch (error) {
+    return false;
+  }
+}
+
 // Show dhikr notification - sends to all tabs
 function showDhikrNotification(settings) {
   const dhikr = getRandomDhikr();
   const reminderType = getCurrentReminderType();
 
-  // Send to all tabs
-  chrome.tabs.query({}, (tabs) => {
-    let successCount = 0;
-    let errorCount = 0;
+  // Get blocked sites from storage
+  chrome.storage.sync.get(["blockedSites"], (data) => {
+    const blockedSites = data.blockedSites || [];
 
-    tabs.forEach((tab) => {
-      // Skip chrome:// and other special pages
-      if (
-        tab.url &&
-        (tab.url.startsWith("chrome://") ||
+    // Send to all tabs
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach((tab) => {
+        // Skip chrome:// and other special pages
+        if (
+          !tab.url ||
+          tab.url.startsWith("chrome://") ||
           tab.url.startsWith("chrome-extension://") ||
           tab.url.startsWith("edge://") ||
-          tab.url.startsWith("about:"))
-      ) {
-        return;
-      }
-
-      chrome.tabs.sendMessage(
-        tab.id,
-        {
-          action: "showDhikr",
-          dhikr: dhikr,
-          settings: settings,
-        },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            errorCount++;
-            console.log(
-              `[ERROR] Failed to send to tab ${tab.id}:`,
-              chrome.runtime.lastError.message
-            );
-          }
-          // else {
-          //   successCount++;
-          //   console.log(`[SUCCESS] Sent to tab ${tab.id} (${tab.title})`);
-          // }
-        }
-      );
-    });
-
-    // Also show Chrome notification as fallback
-    const emoji =
-      reminderType === "morning"
-        ? "🌅"
-        : reminderType === "night"
-        ? "🌙"
-        : "🕌";
-    const message = `${dhikr.arabic}\n\n${dhikr.repetition}\n\n${dhikr.why}`;
-
-    chrome.notifications.create(
-      {
-        type: "basic",
-        title: `${emoji} اذكر الله - Remember Allah`,
-        message: message,
-        priority: 2,
-        requireInteraction: !settings.autoClose,
-        silent: false,
-      },
-      (notificationId) => {
-        if (chrome.runtime.lastError) {
-          console.error(
-            "[ERROR] Fallback notification failed:",
-            chrome.runtime.lastError
-          );
+          tab.url.startsWith("about:") ||
+          tab.url.startsWith("view-source:")
+        ) {
           return;
         }
 
-        if (settings.autoClose) {
-          setTimeout(() => {
-            chrome.notifications.clear(notificationId);
-          }, settings.autoCloseDelay * 1000);
+        // Check if URL is blocked
+        if (isUrlBlocked(tab.url, blockedSites)) {
+          return;
         }
-      }
-    );
 
-    // setTimeout(() => {
-    //   console.log(
-    //     `[STATS] Sent successfully to ${successCount} tabs, ${errorCount} errors`
-    //   );
-    // }, 1000);
+        // Inject script and show notification
+        injectAndShowNotification(tab.id, dhikr, settings);
+      });
+
+      // Also show Chrome notification as fallback
+      const emoji =
+        reminderType === "morning"
+          ? "🌅"
+          : reminderType === "night"
+          ? "🌙"
+          : "🕌";
+      const message = `${dhikr.arabic}\n\n${dhikr.repetition}\n\n${dhikr.why}`;
+
+      chrome.notifications.create(
+        {
+          type: "basic",
+          title: `${emoji} اذكر الله - Remember Allah`,
+          message: message,
+          priority: 2,
+          requireInteraction: !settings.autoClose,
+          silent: false,
+        },
+        (notificationId) => {
+          if (chrome.runtime.lastError) {
+            console.error(
+              "[ERROR] Fallback notification failed:",
+              chrome.runtime.lastError
+            );
+            return;
+          }
+
+          if (settings.autoClose) {
+            setTimeout(() => {
+              chrome.notifications.clear(notificationId);
+            }, settings.autoCloseDelay * 1000);
+          }
+        }
+      );
+
+      // setTimeout(() => {
+      //   console.log(
+      //     `[STATS] Sent successfully to ${successCount} tabs, ${errorCount} errors`
+      //   );
+      // }, 1000);
+    });
   });
 }
 

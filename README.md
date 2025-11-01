@@ -6,7 +6,7 @@
 
 _Remember Allah with appropriate adhkar throughout your day_
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Chrome](https://img.shields.io/badge/Chrome-Extension-yellow.svg)
 
@@ -34,6 +34,7 @@ _Remember Allah with appropriate adhkar throughout your day_
 - **⏸️ Pause/Resume**: Temporarily pause reminders when needed
 - **🌓 Dark Mode Support**: Toggle between light and dark themes
 - **✅ Category Selection**: Enable/disable specific adhkar categories (morning, evening, general)
+- **🚫 Blocked Websites**: Block notifications on specific websites (e.g., during work or study)
 
 ### 📚 Content Features
 
@@ -84,6 +85,7 @@ _This extension will be available on the Chrome Web Store soon._
    - Enable/disable auto-close
    - Set auto-close delay
    - Toggle dark mode
+   - Block specific websites from showing notifications
 
 ### Managing Notifications
 
@@ -91,6 +93,23 @@ _This extension will be available on the Chrome Web Store soon._
 - **Close Manually**: Click the ✕ button
 - **Pause Reminders**: Use the pause toggle in settings
 - **Test Notification**: Click "اختبر التذكير" to see a sample
+
+### Blocking Websites
+
+Don't want notifications on certain websites? You can easily block them:
+
+1. **Open the Extension Popup**
+2. **Scroll to "🚫 مواقع محظورة" (Blocked Websites)**
+3. **Type the website** (e.g., `youtube.com`, `facebook.com`)
+4. **Click "حظر" (Block)**
+5. **To Unblock**: Click the ✕ button next to the site
+
+**Examples of sites you might want to block:**
+
+- 💼 Work: `docs.google.com`, `notion.so`, `slack.com`
+- 🎬 Entertainment: `youtube.com`, `netflix.com`, `twitch.tv`
+- 📚 Study: `coursera.org`, `udemy.com`, `khanacademy.org`
+- 📱 Social: `facebook.com`, `twitter.com`, `instagram.com`
 
 ## 📂 Project Structure
 

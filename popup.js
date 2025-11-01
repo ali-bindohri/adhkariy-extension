@@ -17,12 +17,16 @@ const intervalRadios = document.querySelectorAll('input[name="interval"]');
 const autoCloseSettings = document.getElementById("autoCloseSettings");
 const customIntervalInput = document.getElementById("customInterval");
 const setCustomIntervalBtn = document.getElementById("setCustomInterval");
+const blockWebsiteInput = document.getElementById("blockWebsiteInput");
+const addBlockedSiteBtn = document.getElementById("addBlockedSite");
+const blockedSitesList = document.getElementById("blockedSitesList");
 
 // Initialize popup
 document.addEventListener("DOMContentLoaded", () => {
   loadSettings();
   setupEventListeners();
   initializeTheme();
+  loadBlockedSites();
 });
 
 // Load settings from storage
@@ -38,6 +42,7 @@ function loadSettings() {
       autoCloseDelay: 10,
       isPaused: false,
       darkMode: false,
+      blockedSites: [],
     },
     (settings) => {
       // Set toggle states
@@ -79,13 +84,59 @@ function loadSettings() {
 }
 
 // Setup event listeners
+// Request host permissions for in-page notifications
+async function requestHostPermissions() {
+  try {
+    const granted = await chrome.permissions.request({
+      origins: ["<all_urls>"],
+    });
+    return granted;
+  } catch (error) {
+    console.error("Permission request failed:", error);
+    return false;
+  }
+}
+
+// Check if we have host permissions
+async function hasHostPermissions() {
+  try {
+    const result = await chrome.permissions.contains({
+      origins: ["<all_urls>"],
+    });
+    return result;
+  } catch (error) {
+    return false;
+  }
+}
+
 function setupEventListeners() {
   // Enable/Disable toggle
-  enableToggle.addEventListener("change", (e) => {
+  enableToggle.addEventListener("change", async (e) => {
     const enabled = e.target.checked;
+
+    if (enabled) {
+      // Check if we already have permissions
+      const hasPermission = await hasHostPermissions();
+
+      if (!hasPermission) {
+        // Request permission for in-page notifications
+        showStatus("🔓 طلب إذن لعرض الإشعارات...");
+        const granted = await requestHostPermissions();
+
+        if (!granted) {
+          showStatus("⚠️ تم الرفض - سيتم استخدام إشعارات Chrome فقط");
+          // Still enable, but without in-page notifications
+        } else {
+          showStatus("✅ تم منح الإذن - تذكيرات مفعلة");
+        }
+      }
+    }
+
     chrome.storage.sync.set({ enabled }, () => {
       settingsPanel.style.display = enabled ? "block" : "none";
-      showStatus(enabled ? "✅ تذكيرات مفعلة" : "⏸️ تذكيرات معطلة");
+      if (!enabled) {
+        showStatus("⏸️ تذكيرات معطلة");
+      }
     });
   });
 
@@ -187,6 +238,18 @@ function setupEventListeners() {
     chrome.storage.sync.set({ darkMode: isDark });
     themeToggle.querySelector(".theme-icon").textContent = isDark ? "☀️" : "🌙";
   });
+
+  // Blocked sites - Add button
+  addBlockedSiteBtn.addEventListener("click", () => {
+    addBlockedSite();
+  });
+
+  // Blocked sites - Enter key
+  blockWebsiteInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      addBlockedSite();
+    }
+  });
 }
 
 // Initialize theme based on system preference or saved setting
@@ -233,6 +296,94 @@ function displayCurrentReminderInfo() {
       message = "🕌 Currently: General Adhkar";
       break;
   }
+}
+
+// Load and display blocked sites
+function loadBlockedSites() {
+  chrome.storage.sync.get(["blockedSites"], (data) => {
+    const blockedSites = data.blockedSites || [];
+    displayBlockedSites(blockedSites);
+  });
+}
+
+// Display blocked sites list
+function displayBlockedSites(sites) {
+  blockedSitesList.innerHTML = "";
+
+  if (sites.length === 0) {
+    blockedSitesList.innerHTML =
+      '<p style="font-size: 12px; color: #999; text-align: center; padding: 10px;">لا توجد مواقع محظورة</p>';
+    return;
+  }
+
+  sites.forEach((site, index) => {
+    const siteItem = document.createElement("div");
+    siteItem.style.cssText =
+      "display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f5f5f5; border-radius: 4px; margin-bottom: 6px;";
+
+    const siteText = document.createElement("span");
+    siteText.textContent = site;
+    siteText.style.cssText =
+      "font-size: 12px; color: #333; direction: ltr; text-align: left; flex: 1;";
+
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "✕";
+    removeBtn.style.cssText =
+      "background: #dc3545; color: white; border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;";
+    removeBtn.onclick = () => removeBlockedSite(site);
+
+    siteItem.appendChild(siteText);
+    siteItem.appendChild(removeBtn);
+    blockedSitesList.appendChild(siteItem);
+  });
+}
+
+// Add a blocked site
+function addBlockedSite() {
+  const sitePattern = blockWebsiteInput.value.trim().toLowerCase();
+
+  if (!sitePattern) {
+    showStatus("⚠️ أدخل رابط الموقع");
+    return;
+  }
+
+  // Clean up the input
+  let cleanPattern = sitePattern
+    .replace(/^https?:\/\//, "") // Remove protocol
+    .replace(/^www\./, "") // Remove www.
+    .replace(/\/.*$/, ""); // Remove path
+
+  chrome.storage.sync.get(["blockedSites"], (data) => {
+    const blockedSites = data.blockedSites || [];
+
+    if (blockedSites.includes(cleanPattern)) {
+      showStatus("⚠️ الموقع محظور بالفعل");
+      return;
+    }
+
+    blockedSites.push(cleanPattern);
+    chrome.storage.sync.set({ blockedSites }, () => {
+      showStatus("✅ تم حظر الموقع");
+      blockWebsiteInput.value = "";
+      displayBlockedSites(blockedSites);
+    });
+  });
+}
+
+// Remove a blocked site
+function removeBlockedSite(site) {
+  chrome.storage.sync.get(["blockedSites"], (data) => {
+    const blockedSites = data.blockedSites || [];
+    const index = blockedSites.indexOf(site);
+
+    if (index > -1) {
+      blockedSites.splice(index, 1);
+      chrome.storage.sync.set({ blockedSites }, () => {
+        showStatus("✅ تم إلغاء الحظر");
+        displayBlockedSites(blockedSites);
+      });
+    }
+  });
 }
 
 // Initialize
