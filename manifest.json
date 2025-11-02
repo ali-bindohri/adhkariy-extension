@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "أذكاري (Adhkariy)",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "أذكر الله بأذكارك المناسبة طوال يومك",
   "permissions": ["alarms", "storage", "scripting", "notifications"],
   "background": {
