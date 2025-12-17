@@ -34,8 +34,33 @@ function initializeToastSystem() {
   }
 }
 
+// Clear all existing toasts
+function clearAllToasts() {
+  const container = document.getElementById("adhkar-toast-container");
+  if (container) {
+    // Remove all toast elements
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+  }
+}
+
 // Show dhikr toast notification
 function showDhikrToast(dhikr, settings) {
+  // Check if notification is stale (older than 30 seconds)
+  const MAX_AGE_MS = 30000; // 30 seconds
+  if (settings.timestamp) {
+    const age = Date.now() - settings.timestamp;
+    if (age > MAX_AGE_MS) {
+      console.log(
+        "[CONTENT] Rejecting stale notification (age: " +
+          Math.round(age / 1000) +
+          "s)"
+      );
+      return; // Don't show stale notifications
+    }
+  }
+
   const container = document.getElementById("adhkar-toast-container");
   if (!container) {
     console.error("[CONTENT] Container not found!");
@@ -253,6 +278,15 @@ if (!window.adhkarListenerAdded) {
     }
 
     return true;
+  });
+
+  // Add Page Visibility API listener to clear stale notifications
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      // Tab became visible - clear all existing notifications
+      // This prevents stale notifications from showing when switching back to old tabs
+      clearAllToasts();
+    }
   });
 } else {
 }

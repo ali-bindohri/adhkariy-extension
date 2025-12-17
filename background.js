@@ -253,38 +253,43 @@ function isUrlBlocked(url, blockedSites) {
   }
 }
 
-// Show dhikr notification - sends to all tabs
+// Show dhikr notification - sends to active tab only
 function showDhikrNotification(settings) {
   const dhikr = getRandomDhikr();
   const reminderType = getCurrentReminderType();
+  const timestamp = Date.now(); // Add timestamp for stale detection
 
   // Get blocked sites from storage
   chrome.storage.sync.get(["blockedSites"], (data) => {
     const blockedSites = data.blockedSites || [];
 
-    // Send to all tabs
-    chrome.tabs.query({}, (tabs) => {
-      tabs.forEach((tab) => {
-        // Skip chrome:// and other special pages
-        if (
-          !tab.url ||
-          tab.url.startsWith("chrome://") ||
-          tab.url.startsWith("chrome-extension://") ||
-          tab.url.startsWith("edge://") ||
-          tab.url.startsWith("about:") ||
-          tab.url.startsWith("view-source:")
-        ) {
-          return;
-        }
+    // Send to active tab only (in current window)
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs.length === 0) {
+        return; // No active tab found
+      }
 
-        // Check if URL is blocked
-        if (isUrlBlocked(tab.url, blockedSites)) {
-          return;
-        }
+      const tab = tabs[0]; // Get the active tab
 
-        // Inject script and show notification
-        injectAndShowNotification(tab.id, dhikr, settings);
-      });
+      // Skip chrome:// and other special pages
+      if (
+        !tab.url ||
+        tab.url.startsWith("chrome://") ||
+        tab.url.startsWith("chrome-extension://") ||
+        tab.url.startsWith("edge://") ||
+        tab.url.startsWith("about:") ||
+        tab.url.startsWith("view-source:")
+      ) {
+        return;
+      }
+
+      // Check if URL is blocked
+      if (isUrlBlocked(tab.url, blockedSites)) {
+        return;
+      }
+
+      // Inject script and show notification with timestamp
+      injectAndShowNotification(tab.id, dhikr, { ...settings, timestamp });
 
       // Also show Chrome notification as fallback
       const emoji =
