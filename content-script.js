@@ -222,29 +222,133 @@ function showDhikrToast(dhikr, settings) {
   }
 
   toast.appendChild(content);
-  container.appendChild(toast);
 
-  // Animate in
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      toast.style.transform = "translateX(0)";
-      toast.style.opacity = "1";
-
-      // Check visibility after animation
-      // setTimeout(() => {
-      //   const rect = toast.getBoundingClientRect();
-      //   const computed = window.getComputedStyle(toast);
-      // }, 100);
-    });
-  });
-
-  // Auto close if enabled
+  // Progress bar for auto-close countdown
   if (settings.autoClose) {
-    const delay = (settings.autoCloseDelay || 10) * 1000;
-    setTimeout(() => {
-      closeToast(toast);
-    }, delay);
+    const totalDelay = (settings.autoCloseDelay || 10) * 1000;
+
+    // Progress bar container
+    const progressContainer = document.createElement("div");
+    Object.assign(progressContainer.style, {
+      position: "absolute",
+      bottom: "0",
+      left: "0",
+      right: "0",
+      height: "3px",
+      background: "rgba(0, 0, 0, 0.08)",
+      borderRadius: "0 0 8px 8px",
+      overflow: "hidden",
+    });
+
+    // Progress bar fill
+    const progressBar = document.createElement("div");
+    Object.assign(progressBar.style, {
+      width: "100%",
+      height: "100%",
+      background: "linear-gradient(90deg, #2e7d32, #66bb6a)",
+      borderRadius: "0 0 8px 8px",
+      transition: "none",
+      transformOrigin: "right",
+    });
+
+    progressContainer.appendChild(progressBar);
+    toast.appendChild(progressContainer);
+
+    // Timer state
+    let remainingTime = totalDelay;
+    let startTime = null;
+    let timerId = null;
+    let animFrameId = null;
+    let isPaused = false;
+
+    // Start the countdown
+    function startCountdown() {
+      isPaused = false;
+      startTime = Date.now();
+
+      // Animate the progress bar smoothly
+      function updateProgress() {
+        if (isPaused) return;
+        const elapsed = Date.now() - startTime;
+        const remaining = remainingTime - elapsed;
+        const fraction = Math.max(0, remaining / totalDelay);
+        progressBar.style.transform = `scaleX(${fraction})`;
+
+        if (remaining > 0) {
+          animFrameId = requestAnimationFrame(updateProgress);
+        }
+      }
+      animFrameId = requestAnimationFrame(updateProgress);
+
+      // Set timer to close
+      timerId = setTimeout(() => {
+        closeToast(toast);
+      }, remainingTime);
+    }
+
+    // Pause the countdown
+    function pauseCountdown() {
+      isPaused = true;
+      const elapsed = Date.now() - startTime;
+      remainingTime = Math.max(0, remainingTime - elapsed);
+
+      // Cancel timer and animation
+      if (timerId) {
+        clearTimeout(timerId);
+        timerId = null;
+      }
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+    }
+
+    // Hover: pause countdown
+    toast.addEventListener("mouseenter", () => {
+      if (!isPaused && toast.dataset.closing !== "true") {
+        pauseCountdown();
+      }
+    });
+
+    // Mouse leave: resume countdown
+    toast.addEventListener("mouseleave", () => {
+      if (isPaused && toast.dataset.closing !== "true") {
+        startCountdown();
+      }
+    });
+
+    // Store cleanup reference
+    toast._adhkarCleanup = () => {
+      if (timerId) clearTimeout(timerId);
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+    };
+
+    // Start the initial countdown after animation
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        toast.style.transform = "translateX(0)";
+        toast.style.opacity = "1";
+
+        // Start countdown after slide-in animation finishes
+        setTimeout(() => {
+          startCountdown();
+        }, 400);
+      });
+    });
+  } else {
+    // No auto-close, just animate in
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        toast.style.transform = "translateX(0)";
+        toast.style.opacity = "1";
+      });
+    });
+    return;
   }
+
+  container.appendChild(toast);
 }
 
 // Close toast with animation
@@ -255,6 +359,12 @@ function closeToast(toast) {
   }
 
   toast.dataset.closing = "true";
+
+  // Clean up timers and animations
+  if (toast._adhkarCleanup) {
+    toast._adhkarCleanup();
+  }
+
   toast.style.transform = "translateX(450px)";
   toast.style.opacity = "0";
 
