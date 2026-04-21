@@ -2,12 +2,12 @@
 // Organized by time of day: Morning, Night, and General
 import { eveningAdhkar } from "./evening-adhkar.js";
 import { morningAdhkar } from "./morning-adhkar.js";
-import { generalAdhkar } from "./general-adhkar.js";
+import { generalAdhkar, joamiaAdhkar } from "./general-adhkar.js";
 
 export const ADHKAR_DATA = {
   morning: [...morningAdhkar],
   night: [...eveningAdhkar],
-  general: [...generalAdhkar],
+  general: [...generalAdhkar, ...joamiaAdhkar],
 };
 
 // Helper function to get random dhikr based on current time
