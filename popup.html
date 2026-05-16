@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -18,13 +18,22 @@
               <span class="english">Adhkar Reminder</span>
             </span>
           </h1>
-          <button
-            class="theme-toggle"
-            id="themeToggle"
-            title="Toggle dark mode"
-          >
-            <span class="theme-icon">🌙</span>
-          </button>
+          <div class="header-actions">
+            <button
+              class="header-btn"
+              id="shareExtension"
+              title="مشاركة الإضافة"
+            >
+              <span>🔗</span>
+            </button>
+            <button
+              class="theme-toggle"
+              id="themeToggle"
+              title="Toggle dark mode"
+            >
+              <span class="theme-icon">🌙</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -258,8 +267,12 @@
 
           <!-- Action Buttons -->
           <section class="section actions">
-            <button class="btn btn-primary" id="testNotification">
-              <span>🔔 اختبار الإشعار</span>
+            <button
+              class="btn btn-primary"
+              id="browseAdhkar"
+              style="margin-top: 10px"
+            >
+              <span>📖 تصفح الأذكار</span>
             </button>
           </section>
         </div>
