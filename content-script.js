@@ -24,6 +24,38 @@ function initializeToastSystem() {
     pointerEvents: "none",
   });
 
+  // Add styles for Ayah marks
+  const style = document.createElement("style");
+  style.textContent = `
+    .ayah-mark {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      position: relative !important;
+      width: 1.8em !important;
+      height: 1.8em !important;
+      vertical-align: middle !important;
+      margin: 0 4px !important;
+      direction: ltr !important;
+    }
+    .ayah-symbol {
+      position: absolute !important;
+      font-size: 1.8em !important;
+      color: #2e7d32 !important;
+      user-select: none !important;
+    }
+    .ayah-number {
+      position: relative !important;
+      font-size: 0.7em !important;
+      font-weight: 700 !important;
+      color: #333 !important;
+      z-index: 1 !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      margin-top: 1px !important;
+    }
+  `;
+  container.appendChild(style);
+
   // Append to body, or wait for body to load
   if (document.body) {
     document.body.appendChild(container);
@@ -96,7 +128,7 @@ function showDhikrToast(dhikr, settings) {
     borderLeft: "3px solid #2e7d32",
     maxWidth: "320px",
     fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Naskh Arabic", "Amiri", "Traditional Arabic", Arial, sans-serif',
     pointerEvents: "auto",
     minWidth: "280px",
     marginBottom: "10px",
@@ -111,6 +143,14 @@ function showDhikrToast(dhikr, settings) {
     marginBottom: "8px",
   });
 
+  // Left group: title + share button
+  const leftGroup = document.createElement("div");
+  Object.assign(leftGroup.style, {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  });
+
   const title = document.createElement("div");
   Object.assign(title.style, {
     fontSize: "13px",
@@ -121,6 +161,40 @@ function showDhikrToast(dhikr, settings) {
     gap: "6px",
   });
   title.innerHTML = `<span style="font-size: 16px;">${emoji}</span><span>اذكر الله</span>`;
+
+  // Share button
+  const shareBtn = document.createElement("button");
+  shareBtn.innerHTML = "🔗";
+  Object.assign(shareBtn.style, {
+    background: "none",
+    border: "none",
+    fontSize: "14px",
+    color: "#999",
+    cursor: "pointer",
+    padding: "2px",
+    width: "22px",
+    height: "22px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "4px",
+    transition: "all 0.2s",
+    marginLeft: "4px",
+  });
+  shareBtn.onmouseover = () => {
+    shareBtn.style.background = "#f0f0f0";
+    shareBtn.style.color = "#2e7d32";
+  };
+  shareBtn.onmouseout = () => {
+    shareBtn.style.background = "none";
+    shareBtn.style.color = "#999";
+  };
+  shareBtn.onclick = () => {
+    chrome.runtime.sendMessage({ action: "openShareModal" });
+  };
+
+  leftGroup.appendChild(title);
+  leftGroup.appendChild(shareBtn);
 
   // Close button
   const closeBtn = document.createElement("button");
@@ -150,7 +224,7 @@ function showDhikrToast(dhikr, settings) {
   };
   closeBtn.onclick = () => closeToast(toast);
 
-  header.appendChild(title);
+  header.appendChild(leftGroup);
   header.appendChild(closeBtn);
   toast.appendChild(header);
 
@@ -179,7 +253,16 @@ function showDhikrToast(dhikr, settings) {
 
   // Arabic text
   const arabicText = document.createElement("div");
-  arabicText.textContent = dhikr.arabic;
+  const rawArabic = dhikr.arabic;
+
+  // Function to format Ayah marks
+  const formatArabicText = (text) => {
+    return text.replace(/۝([٠-٩0-9]+)/g, (match, p1) => {
+      return `<span class="ayah-mark"><span class="ayah-symbol">۝</span><span class="ayah-number">${p1}</span></span>`;
+    });
+  };
+
+  arabicText.innerHTML = formatArabicText(rawArabic);
   Object.assign(arabicText.style, {
     fontSize: "16px",
     fontWeight: "700",

@@ -9,7 +9,7 @@ const generalToggle = document.getElementById("generalToggle");
 const autoCloseToggle = document.getElementById("autoCloseToggle");
 const autoCloseDelay = document.getElementById("autoCloseDelay");
 const pauseToggle = document.getElementById("pauseToggle");
-const testNotificationBtn = document.getElementById("testNotification");
+
 const themeToggle = document.getElementById("themeToggle");
 const settingsPanel = document.getElementById("settings");
 const statusMessage = document.getElementById("statusMessage");
@@ -223,11 +223,24 @@ function setupEventListeners() {
     });
   });
 
-  // Test notification button
-  testNotificationBtn.addEventListener("click", () => {
-    chrome.runtime.sendMessage({ action: "testNotification" }, (response) => {
+
+
+  // Browse adhkar modal button
+  const browseAdhkarBtn = document.getElementById("browseAdhkar");
+  browseAdhkarBtn.addEventListener("click", () => {
+    chrome.runtime.sendMessage({ action: "openAdhkarModal" }, (response) => {
       if (response && response.success) {
-        showStatus("🔔 تم إرسال الإشعار");
+        window.close();
+      }
+    });
+  });
+
+  // Share extension button
+  const shareExtensionBtn = document.getElementById("shareExtension");
+  shareExtensionBtn.addEventListener("click", () => {
+    chrome.runtime.sendMessage({ action: "openShareModal" }, (response) => {
+      if (response && response.success) {
+        window.close();
       }
     });
   });
